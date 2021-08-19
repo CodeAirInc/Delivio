@@ -1,0 +1,526 @@
+﻿@model Delivio.Models.DeliveryStatusModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/mobile.detect.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <title>Display Location</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    @if (!Model.IsDeliveryCompleted)
+    {
+        <meta http-equiv="refresh" content="10; url=#">
+    }
+    <style>
+        #map {
+            width: 1500px;
+            height: 450px;
+            align-content: center;
+        }
+
+        #mobileMap {
+            width: 900px;
+            height: 270px;
+        }
+
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div style="display:none" id="webView1">
+        @*<table>
+                <tr class="text-center">
+                    <td><img src="~/images/delivioLogoMobile.png" /></td>
+                </tr>
+            </table>*@
+        <div class="container" style="background: rgba(247, 247, 247)">
+            &nbsp;&nbsp;
+        </div>
+        <div class="container" style="background: rgba(247, 247, 247)">
+            <table width="400" style="background-color: white" align="center">
+                <tr class="bg-dark text-center">
+                    <td colspan="2">
+                        @if (Model.IsDeliveryCancelled)
+                        {
+                            <font color="white" size="3"><strong>Delivery Cancelled</strong></font>
+                        }
+                        else
+                        {
+                            <font color="white" size="3"><strong>Tracking Information</strong></font>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-center">
+                        @if (Model.IsDeliveryCancelled)
+                        {
+                            <font color="gray" size="2">
+                                &nbsp;Cancellation Time:
+                                <script type="text/javascript">
+                            var utc = new Date('@Model.CancelledOn');
+                            var now = new Date(utc);
+                            now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                            document.write(now.toLocaleString().replace(',', ' '));
+                                </script>
+                            </font><br />
+                            <font size="2">&nbsp;Cancellation Reason:&nbsp;@Model.CancellationReason</font>
+                        }
+                        else if (Model.IsDeliveryCompleted)
+                        {
+                            <font color="gray" size="2">
+                                &nbsp;Delivery Time:
+                                <script type="text/javascript">
+                            var utc = new Date('@Model.DeliveryEndTime');
+                            var now = new Date(utc);
+                            now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                            document.write(now.toLocaleString().replace(',', ' '));
+                                </script>
+                            </font>
+                        }
+                        else
+                        {
+                            <div id="webViewEstimatedDeliveryTime"></div>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    @if (!Model.IsDeliveryCancelled)
+                    {
+                        if ((Model.PhotoUrls != null && Model.PhotoUrls.Any()) || !string.IsNullOrWhiteSpace(Model.ProofPhotoUrl))
+                        {
+                            if (!string.IsNullOrWhiteSpace(Model.ProofPhotoUrl))
+                            {
+                                <td valign="top">&nbsp;<img width="130" height="130" src="@Model.ProofPhotoUrl" /></td>
+
+                            }
+                            else
+                            {
+                                foreach (var photoUrl in Model.PhotoUrls)
+                                {
+                                    <td valign="top">&nbsp;<img width="130" height="130" src="@photoUrl" /></td>
+                                }
+                            }
+                        }
+                    }
+                    <td valign="top">
+                        @if (Model.IsDeliveryCancelled)
+                        {
+                            <span>&nbsp;</span>
+                        }
+                        else if (Model.IsDeliveryCompleted)
+                        {
+                            <img src="@Model.ImagesUrl/checkBlackBackground.jpg" />
+                            <font size="2">&nbsp;Out for Delivery</font>
+                            <br /><font color="gray" size="2">
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today at
+                                <script type="text/javascript">
+                                        var utc = new Date('@Model.DeliveryStartTime');
+                                        var now = new Date(utc);
+                                        now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                                        document.write(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit'}).replace(',', ' '));
+                                </script>
+                            </font><br /><br />
+                            <img src="@Model.ImagesUrl/checkBlackBackground.jpg" />
+                            <font size="2">&nbsp;Successfully Delivered</font>
+                            <br /><font color="gray" size="2">
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today at
+                                <script type="text/javascript">
+                                        var utc = new Date('@Model.DeliveryEndTime');
+                                var now = new Date(utc);
+                                now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                                document.write(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit'}).replace(',', ' '));
+                                </script>
+                            </font>
+                        }
+                        else
+                        {
+                            <img src="@Model.ImagesUrl/blankCircle.jpg" />
+                            <font size="2">&nbsp;Out for Delivery</font>
+                            <br /><font color="gray" size="2">
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today at
+                                <script type="text/javascript">
+                                        var utc = new Date('@Model.DeliveryStartTime');
+                                        var now = new Date(utc);
+                                        now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                                        document.write(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit'}).replace(',', ' '));
+                                </script>
+                            </font>
+                        }
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="container" style="background: rgba(247, 247, 247)">
+            &nbsp;&nbsp;
+        </div>
+        <table>
+            <tr>
+                <td colspan="2" id="map"></td>
+            </tr>
+        </table>
+    </div>
+    <div style="display:none" id="webView2">
+        <table class="text-center table table-dark">
+            <tr>
+                <td valign="top">
+                    @if (!string.IsNullOrWhiteSpace(Model.UserPhotoUrl))
+                    {
+                        <img width="80" height="100" src="@Model.UserPhotoUrl" /><br />
+                    }
+                    @{
+                        var fullName = Model.DriverFirstName + " " + Model.DriverLastName;
+                    }
+                    <font color="white" size="2">
+                        Driver Name:&nbsp;<text>@fullName</text><br />
+                        <button id="btnCellNumber" type="button" style="background-color: #e7b63a; color: #ffffff; border: hidden; font-size: 14px;"
+                                onclick="window.open('tel:@Model.DriverPhoneNumber', '_self');">
+                            <strong>Call @Model.DriverFirstName</strong>
+                        </button>
+                    </font>
+                </td>
+                <td valign="top">
+                    @if (!string.IsNullOrWhiteSpace(Model.VehiclePhotoUrl))
+                    {
+                        <img width="80" height="100" src="@Model.VehiclePhotoUrl" /><br />
+                    }
+                    <font color="white" size="2">
+                        &nbsp;Vehicle:&nbsp;<text>@Model.DriverVehicle</text><br />
+                    </font>
+                    @if (!string.IsNullOrWhiteSpace(Model.VehiclePlateNumber))
+                    {
+                        <font color="white" size="2">
+                            &nbsp;Plate #:&nbsp;<text>@Model.VehiclePlateNumber</text><br />
+                        </font>
+                    }
+                </td>
+            </tr>
+            <tr class="text-center">
+                <td colspan="2">
+                    <font color="white" size="2">ⓒ @DateTime.Now.Year Delivio. All Rights Reserved.</font>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="display:none" id="mobileView1">
+        @*<table>
+                <tr class="text-center">
+                    <td><img src="~/images/delivioLogoMobile.png" /></td>
+                </tr>
+            </table>*@
+        <div class="container" style="background: rgba(247, 247, 247)">
+            &nbsp;&nbsp;
+        </div>
+        <div class="container" style="background: rgba(247, 247, 247)">
+            <table width="350" style="background-color: white" align="center">
+                <tr class="text-center" style="background-color: black">
+                    <td colspan="2">
+                        @if (Model.IsDeliveryCancelled)
+                        {
+                            <font color="white" size="3"><strong>Delivery Cancelled</strong></font>
+                        }
+                        else
+                        {
+                            <font color="white" size="3"><strong>Tracking Information</strong></font>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-center">
+                        @if (Model.IsDeliveryCancelled)
+                        {
+                            <font color="gray" size="2">
+                                &nbsp;Cancellation Time:
+                                <script type="text/javascript">
+                            var utc = new Date('@Model.CancelledOn');
+                            var now = new Date(utc);
+                            now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                            document.write(now.toLocaleString().replace(',', ' '));
+                                </script>
+                            </font><br />
+                            <font size="2">&nbsp;Cancellation Reason:&nbsp;@Model.CancellationReason</font>
+                        }
+                        else if (Model.IsDeliveryCompleted)
+                        {
+                            <font color="gray" size="2">
+                                &nbsp;Delivery Time:
+                                <script type="text/javascript">
+                            var utc = new Date('@Model.DeliveryEndTime');
+                            var now = new Date(utc);
+                            now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                            document.write(now.toLocaleString().replace(',', ' '));
+                                </script>
+                            </font>
+                        }
+                        else
+                        {
+                            <div id="mobileViewEstimatedDeliveryTime"></div>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    @if (!Model.IsDeliveryCancelled)
+                    {
+                        if ((Model.PhotoUrls != null && Model.PhotoUrls.Any()) || !string.IsNullOrWhiteSpace(Model.ProofPhotoUrl))
+                        {
+                            if (!string.IsNullOrWhiteSpace(Model.ProofPhotoUrl))
+                            {
+                                <td valign="top">&nbsp;<img width="130" height="130" src="@Model.ProofPhotoUrl" /></td>
+
+                            }
+                            else
+                            {
+                                foreach (var photoUrl in Model.PhotoUrls)
+                                {
+                                    <td valign="top">&nbsp;<img width="130" height="130" src="@photoUrl" /></td>
+                                }
+                            }
+                        }
+                    }
+                    <td valign="top">
+                        @if (Model.IsDeliveryCancelled)
+                        {
+                            <span>&nbsp;</span>
+                        }
+                        else if (Model.IsDeliveryCompleted)
+                        {
+                            <font size="2">&#8226;&nbsp;Out for Delivery</font>
+                            <br /><font color="gray" size="2">
+                                &nbsp;&nbsp;&nbsp;Today at
+                                <script type="text/javascript">
+                                        var utc = new Date('@Model.DeliveryStartTime');
+                                        var now = new Date(utc);
+                                        now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                                        document.write(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit'}).replace(',', ' '));
+                                </script>
+                            </font><br />
+                            <font size="2">&#8226;&nbsp;Successfully Delivered</font>
+                            <br /><font color="gray" size="2">
+                                &nbsp;&nbsp;&nbsp;Today at
+                                <script type="text/javascript">
+                                        var utc = new Date('@Model.DeliveryEndTime');
+                                var now = new Date(utc);
+                                now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                                document.write(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit'}).replace(',', ' '));
+                                </script>
+                            </font>
+                        }
+                        else
+                        {
+                            <font size="2">&#8226;&nbsp;Out for Delivery</font>
+                            <br /><font color="gray" size="2">
+                                &nbsp;&nbsp;&nbsp;Today at
+                                <script type="text/javascript">
+                                        var utc = new Date('@Model.DeliveryStartTime');
+                                        var now = new Date(utc);
+                                        now.setMinutes(utc.getMinutes() - utc.getTimezoneOffset());
+                                        document.write(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit'}).replace(',', ' '));
+                                </script>
+                            </font>
+                        }
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="container" style="background: rgba(247, 247, 247)">
+            &nbsp;&nbsp;
+        </div>
+        <table>
+            <tr>
+                <td colspan="2" id="mobileMap"></td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="display:none" id="mobileView2">
+        <table class="text-center table" style="background-color: black">
+            <tr>
+                <td valign="top">
+                    @if (!string.IsNullOrWhiteSpace(Model.UserPhotoUrl))
+                    {
+                        <img width="80" height="100" src="@Model.UserPhotoUrl" /><br />
+                    }
+                    @{
+                        var fullName2 = Model.DriverFirstName + " " + Model.DriverLastName;
+                    }
+                    <font color="white" size="2">
+                        Driver Name:&nbsp;<text>@fullName2</text><br />
+                        <button id="btnCellNumber" type="button" style="background-color: #e7b63a; color: #ffffff; border: hidden; font-size: 14px;"
+                                onclick="window.open('tel:@Model.DriverPhoneNumber', '_self');">
+                            <strong>Call @Model.DriverFirstName</strong>
+                        </button>
+                    </font>
+                </td>
+                <td valign="top">
+                    @if (!string.IsNullOrWhiteSpace(Model.VehiclePhotoUrl))
+                    {
+                        <img width="80" height="100" src="@Model.VehiclePhotoUrl" /><br />
+                    }
+                    <font color="white" size="2">
+                        &nbsp;Vehicle:&nbsp;<text>@Model.DriverVehicle</text><br />
+                    </font>
+                    @if (!string.IsNullOrWhiteSpace(Model.VehiclePlateNumber))
+                    {
+                        <font color="white" size="2">
+                            &nbsp;Plate #:&nbsp;<text>@Model.VehiclePlateNumber</text><br />
+                        </font>
+                    }
+                </td>
+            </tr>
+            <tr class="text-center">
+                <td colspan="2">
+                    <font color="white" size="2">ⓒ @DateTime.Now.Year Delivio. All Rights Reserved.</font>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        var map;
+        function initMap() {
+            var location = new google.maps.LatLng('@Model.Latitude', '@Model.Longitude');
+
+            var md = new MobileDetect(window.navigator.userAgent);
+            if (md.mobile()) {
+                map = new google.maps.Map(
+                    document.getElementById('mobileMap'), { zoom: @Model.Zoom, center: location });
+            }
+            else {
+                map = new google.maps.Map(
+                    document.getElementById('map'), { zoom: @Model.Zoom, center: location });
+            }
+
+            var iconFile = '/car_icon.gif';
+            if ('@Model.DeliveryMethod' === 'cycling') {
+                iconFile = '/bicycle_delivery.gif';
+            }
+            else if ('@Model.DeliveryMethod' === 'walking') {
+                iconFile = '/walk_delivery.gif';
+            }
+
+            var icon = {
+                url: '@Model.ImagesUrl' + iconFile,
+                size: new google.maps.Size(100, 78),
+                scaledSize: new google.maps.Size(40, 28),
+                origin: new google.maps.Point(0, 0), // origin
+                anchor: new google.maps.Point(10, 28) // anchor
+            }
+
+            if ('@Model.IsDeliveryCancelled' === 'True')
+                var marker = new google.maps.Marker({ position: location, map: map, draggable: false, label: { color: '#FFA833', fontWeight: 'bold', fontSize: '18px', text:'Delivery Cancelled!'} });
+            else if ('@Model.IsDeliveryCompleted' === 'True')
+                var marker = new google.maps.Marker({ position: location, map: map, draggable: false, label: { color: '#FFA833', fontWeight: 'bold', fontSize: '18px', text: 'Delivery Completed!' } });
+            else
+                var marker = new google.maps.Marker({ position: location, map: map, draggable: false, icon: icon });
+
+            map.addListener('zoom_changed', () => {
+                //set the icon with the new size to the marker
+                if (map.zoom >= 23) {
+                    marker.icon.scaledSize = new google.maps.Size(80, 58);
+                    marker.iDeliveryPlanningTimeDeliveryPlanningTimecon.anchor = new google.maps.Point(15, 58);
+                }
+                else if (map.zoom >= 21) {
+                    marker.icon.scaledSize = new google.maps.Size(70, 48);
+                    marker.icon.anchor = new google.maps.Point(10, 48);
+                }
+                else if (map.zoom >= 19) {
+                    marker.icon.scaledSize = new google.maps.Size(60, 38);
+                    marker.icon.anchor = new google.maps.Point(15, 38);
+                }
+                else if (map.zoom >= 17) {
+                    marker.icon.scaledSize = new google.maps.Size(50, 28);
+                    marker.icon.anchor = new google.maps.Point(10, 28);
+                }
+                else if (map.zoom >= 15) {
+                    marker.icon.scaledSize = new google.maps.Size(40, 28);
+                    marker.icon.anchor = new google.maps.Point(5, 18);
+                }
+                else if (map.zoom >= 13) {
+                    marker.icon.scaledSize = new google.maps.Size(30, 18);
+                    marker.icon.anchor = new google.maps.Point(7.5, 9);
+                }
+                else if (map.zoom >= 11) {
+                    marker.icon.scaledSize = new google.maps.Size(15, 9);
+                    marker.icon.anchor = new google.maps.Point(7.5, 9);
+                }
+                else {
+                    marker.icon.scaledSize = new google.maps.Size(7, 9);
+                    marker.icon.anchor = new google.maps.Point(3.5, 9);
+                }
+                marker.setMap(map);
+
+            });
+
+            if ('@Model.TargetLatitude' !== undefined && '@Model.TargetLongitude' != "") {
+                var origin = new google.maps.LatLng('@Model.Latitude', '@Model.Longitude');
+                var destination = '@Model.TargetLatitude' + ', ' + '@Model.TargetLongitude';
+                var directionsService = new google.maps.DirectionsService();
+                var travelMode = google.maps.DirectionsTravelMode.DRIVING;
+                if ('@Model.DeliveryMethod' == 'cycling') {
+                    travelMode = google.maps.DirectionsTravelMode.BICYCLING;
+                }
+                else if ('@Model.DeliveryMethod' == 'walking') {
+                    travelMode = google.maps.DirectionsTravelMode.WALKING;
+                }
+
+                var request = {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: travelMode
+                };
+                directionsService.route(request, function (response, status) {
+                    if (status === 'OK') {
+                        var point = response.routes[0].legs[0];
+                        var now = new Date();
+                        now.setMinutes(now.getMinutes() + parseInt(point.duration.text));
+                        if (md.mobile()) {
+                            $('#mobileViewEstimatedDeliveryTime').html('<font color=gray size=2>&nbsp;&nbsp;Estimated Delivery Time:&nbsp;'
+                                + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).replace(',', ' ')
+                                + '<br>&nbsp;&nbsp;Estimated Time Left:&nbsp;' + point.duration.text + '<br></font>');
+                        }
+                        else {
+                            $('#webViewEstimatedDeliveryTime').html('<font color=gray size=2>&nbsp;&nbsp;Estimated Delivery Time:&nbsp;'
+                                + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).replace(',', ' ')
+                                + '<br>&nbsp;&nbsp;Estimated Time Left:&nbsp;' + point.duration.text + '<br></font>');
+                        }
+                    }
+                });
+            }
+        }
+
+        $(function () {
+            var md = new MobileDetect(window.navigator.userAgent);
+            var webView1 = document.getElementById("webView1");
+            var webView2 = document.getElementById("webView2");
+            var mobileView1 = document.getElementById("mobileView1");
+            var mobileView2 = document.getElementById("mobileView2");
+
+            if (md.mobile()) {
+                webView1.style.display = "none";
+                webView2.style.display = "none";
+                mobileView1.style.display = "block";
+                mobileView2.style.display = "block";
+            }
+            else {
+                webView1.style.display = "block";
+                webView2.style.display = "block";
+                mobileView1.style.display = "none";
+                mobileView2.style.display = "none";
+            }
+        });
+    </script>
+    <script src="@Model.GoogleMapApiSrc&callback=initMap" async defer></script>
+</body>
+</html>
+
